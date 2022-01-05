@@ -97,7 +97,7 @@ module Ione
             end
           end
 
-          it 'restarts the reactor even when restarted before a failed stop' do
+          xit 'restarts the reactor even when restarted before a failed stop' do
             barrier = Queue.new
             selector.handler do
               if barrier.pop == :fail
