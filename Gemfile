@@ -12,11 +12,12 @@ group :development do
 end
 
 group :http_client_example do
-  gem 'http_parser.rb'
+  gem 'http_parser.rb', '< 0.7'
 end
 
 group :test do
   gem 'rspec'
+  gem 'rspec-collection_matchers'
   gem 'simplecov'
   gem 'coveralls'
 end

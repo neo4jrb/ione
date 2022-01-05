@@ -28,4 +28,5 @@ RSpec.configure do |config|
   config.warnings = true
 end
 
+require 'rspec/collection_matchers'
 require 'ione'

@@ -69,7 +69,7 @@ module Ione
           reactor.start.value
           await { called }
           reactor.stop.value
-          called.should be_true, 'expected the selector to have been called'
+          called.should be_truthy, 'expected the selector to have been called'
         end
 
         context 'when stopping' do
@@ -118,8 +118,8 @@ module Ione
             restarted_future.value
             await { crashed && restarted }
             begin
-              crashed.should be_true
-              restarted.should be_true
+              crashed.should eq true
+              restarted.should eq true
             ensure
               reactor.stop
               barrier.push(nil) while reactor.running?
@@ -372,7 +372,7 @@ module Ione
           reactor.on_error { called = true }
           reactor.start
           await { called }
-          called.should be_true, 'expected all close listeners to have been called'
+          called.should be_truthy, 'expected all close listeners to have been called'
         end
 
         it 'calls all listeners when the reactor crashes after being restarted' do
