@@ -3,7 +3,6 @@
 ENV['SERVER_HOST'] ||= '127.0.0.1'.freeze
 
 require 'bundler/setup'
-require 'pry'
 
 require 'support/fake_server'
 require 'support/await_helper'

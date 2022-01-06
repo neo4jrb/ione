@@ -18,7 +18,6 @@ end
 
 group :test do
   gem 'coveralls'
-  gem 'pry'
   gem 'rspec'
   gem 'simplecov'
 end

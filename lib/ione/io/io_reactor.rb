@@ -145,12 +145,13 @@ module Ione
             @state = RUNNING_STATE
           end
         end
-        @started_promise = Concurrent::Promises.fulfilled_future(self)
+        @started_promise = Concurrent::Promises.resolvable_future
         @stopped_promise = Concurrent::Promises.resolvable_future
         @error_listeners.each do |listener|
           @stopped_promise.on_rejection(&listener)
         end
         Thread.start do
+          @started_promise.fulfill(self)
           error = nil
           begin
             while @state == RUNNING_STATE
