@@ -12,7 +12,7 @@ group :development do
 end
 
 group :http_client_example do
-  gem 'http_parser.rb', '< 0.7'
+  gem 'http_parser.rb', RUBY_PLATFORM == 'java' ? '< 0.7' : '> 0'
 end
 
 group :test do
