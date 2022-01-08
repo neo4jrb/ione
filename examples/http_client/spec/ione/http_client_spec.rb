@@ -16,7 +16,7 @@ module Ione
       HttpClientSpec::Servlet
     end
 
-    if RUBY_PLATFORM == 'java'
+    if RUBY_PLATFORM == 'java' && false
       def host
         host = Socket::gethostname
         begin
