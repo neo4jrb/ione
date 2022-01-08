@@ -101,7 +101,7 @@ module Ione
       include_examples 'http_requests'
     end
 
-    context 'over HTTPS', https: true do
+    context 'over HTTPS', unresolved: RUBY_VERSION > '2.3' do
       let :client do
         described_class.new(cert_store)
       end
