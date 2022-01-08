@@ -17,15 +17,24 @@ module Ione
       HttpClientSpec::Servlet
     end
 
+    def host
+      host = Socket::gethostname
+      begin
+        Socket::gethostbyname(host)[0]
+      rescue
+        host
+      end
+    end
+
     let :base_uri do
-      "#{scheme}://#{WEBrick::Utils::getservername}:#{port}"
+      "#{scheme}://#{host}:#{port}"
     end
 
     def await_server_start
       attempts = 10
       begin
-        puts "host: #{WEBrick::Utils::getservername}, port: #{port}"
-        http = Net::HTTP.new(WEBrick::Utils::getservername, port)
+        puts "host: #{host}, port: #{port}"
+        http = Net::HTTP.new(host, port)
         if scheme == 'https'
           http.use_ssl = true
           http.cert_store = cert_store
@@ -121,7 +130,7 @@ module Ione
       end
 
       let :cert_and_key do
-        HttpClientSpec.create_cert(*root_ca_and_key, [['CN', WEBrick::Utils::getservername]])
+        HttpClientSpec.create_cert(*root_ca_and_key, [['CN', host]])
       end
 
       let :cert do
