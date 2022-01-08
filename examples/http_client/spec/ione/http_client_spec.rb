@@ -6,23 +6,28 @@ require 'net/https'
 require 'logger'
 require 'ione/http_client'
 
-
 module Ione
   describe HttpClient do
     let :port do
-      rand(2**15) + 2**15
+      rand(2 ** 15) + 2 ** 15
     end
 
     let :handler do
       HttpClientSpec::Servlet
     end
 
-    def host
-      host = Socket::gethostname
-      begin
-        Socket::gethostbyname(host)[0]
-      rescue
-        host
+    if RUBY_PLATFORM == 'java'
+      def host
+        host = Socket::gethostname
+        begin
+          Socket::gethostbyname(host)[0]
+        rescue
+          host
+        end
+      end
+    else
+      def host
+        WEBrick::Utils::getservername
       end
     end
 
