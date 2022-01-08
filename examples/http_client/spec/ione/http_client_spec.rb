@@ -117,7 +117,7 @@ module Ione
       include_examples 'http_requests'
     end
 
-    context 'over HTTPS' do
+    context 'over HTTPS', https: true do
       let :client do
         described_class.new(cert_store)
       end
