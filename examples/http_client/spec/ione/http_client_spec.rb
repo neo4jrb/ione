@@ -24,6 +24,7 @@ module Ione
     def await_server_start
       attempts = 10
       begin
+        puts "host: #{WEBrick::Utils::getservername}, port: #{port}"
         http = Net::HTTP.new(WEBrick::Utils::getservername, port)
         if scheme == 'https'
           http.use_ssl = true
