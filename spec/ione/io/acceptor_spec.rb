@@ -208,7 +208,7 @@ module Ione
           acceptor.on_accept { |c| called = true }
           acceptor.bind
           acceptor.read
-          called.should be_true
+          called.should eq true
         end
       end
 
