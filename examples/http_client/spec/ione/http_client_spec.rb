@@ -6,11 +6,10 @@ require 'net/https'
 require 'logger'
 require 'ione/http_client'
 
-
 module Ione
   describe HttpClient do
     let :port do
-      rand(2**15) + 2**15
+      rand(2 ** 15) + 2 ** 15
     end
 
     let :handler do
@@ -102,7 +101,7 @@ module Ione
       include_examples 'http_requests'
     end
 
-    context 'over HTTPS' do
+    context 'over HTTPS', unresolved: RUBY_VERSION > '2.3' do
       let :client do
         described_class.new(cert_store)
       end
