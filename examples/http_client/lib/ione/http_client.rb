@@ -4,10 +4,9 @@ require 'ione'
 require 'http_parser'
 require 'uri'
 
-
 module Ione
   class HttpClient
-    def initialize(cert_store=nil)
+    def initialize(cert_store = nil)
       @reactor = Io::IoReactor.new
       if cert_store
         @cert_store = cert_store
@@ -18,14 +17,14 @@ module Ione
     end
 
     def start
-      @reactor.start.map(self)
+      @reactor.start.then { self }
     end
 
     def stop
-      @reactor.stop.map(self)
+      @reactor.stop.then { self }
     end
 
-    def get(url, headers={})
+    def get(url, headers = {})
       uri = URI.parse(url)
       options = {}
       if uri.scheme == 'https'
@@ -35,7 +34,7 @@ module Ione
         options[:ssl] = ctx
       end
       f = @reactor.connect(uri.host, uri.port, options) { |connection| HttpProtocolHandler.new(connection) }
-      f.flat_map do |handler|
+      f.flat do |handler|
         handler.send_get(uri.path, uri.query, headers)
       end
     end

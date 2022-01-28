@@ -21,7 +21,7 @@ module Ione
 
     it 'can get a value' do
       pending('Redis not running') unless client
-      f = client.set('foo', 'bar').flat_map do
+      f = client.set('foo', 'bar').flat do
         client.get('foo')
       end
       f.value.should eq('bar')
@@ -29,7 +29,7 @@ module Ione
 
     it 'can delete values' do
       pending('Redis not running') unless client
-      f = client.set('hello', 'world').flat_map do
+      f = client.set('hello', 'world').flat do
         client.del('hello')
       end
       f.value.should eq(1)
@@ -37,7 +37,7 @@ module Ione
 
     it 'handles nil values' do
       pending('Redis not running') unless client
-      f = client.del('hello').flat_map do
+      f = client.del('hello').flat do
         client.get('hello')
       end
       f.value.should be_nil

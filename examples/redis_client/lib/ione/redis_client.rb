@@ -17,10 +17,10 @@ module Ione
 
     def connect
       f = @reactor.start
-      f = f.flat_map { @reactor.connect(@host, @port) }
-      f = f.map { |connection| RedisProtocolHandler.new(connection) }
+      f = f.flat { @reactor.connect(@host, @port) }
+      f = f.then { |connection| RedisProtocolHandler.new(connection) }
       f.on_value { |protocol_handler| @protocol_handler = protocol_handler }
-      f.map(self)
+      f.then(self)
     end
 
     def method_missing(name, *args)

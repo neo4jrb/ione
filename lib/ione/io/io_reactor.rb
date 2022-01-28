@@ -140,7 +140,7 @@ module Ione
           if @state == RUNNING_STATE
             return @started_promise
           elsif @state == STOPPING_STATE
-            return @stopped_promise.then { |_| start }.rescue { start }
+            return @stopped_promise.flat { start }.rescue { start }
           else
             @state = RUNNING_STATE
           end
@@ -241,7 +241,7 @@ module Ione
         @io_loop.add_socket(connection)
         @unblocker.unblock if running?
         if ssl
-          f = f.flat_map do
+          f = f.flat do
             ssl_context = ssl == true ? nil : ssl
             upgraded_connection = SslConnection.new(host, port, connection.to_io, @unblocker, ssl_context)
             ff = upgraded_connection.connect
@@ -251,7 +251,7 @@ module Ione
             ff
           end
         end
-        f = f.map(&block) if block_given?
+        f = f.then(&block) if block_given?
         f
       end
 
@@ -325,7 +325,7 @@ module Ione
         f = server.bind
         @io_loop.add_socket(server)
         @unblocker.unblock if running?
-        f = f.map(&block) if block_given?
+        f = f.then(&block) if block_given?
         f
       end
 

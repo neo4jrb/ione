@@ -112,7 +112,7 @@ module Ione
             crashed = false
             restarted = false
             stopped_future.on_rejection { crashed = true }
-            restarted_future.on_fulfillment { restarted = true }
+            restarted_future.on_resolution { restarted = true }
             barrier.push(:fail)
             stopped_future.value rescue nil
             restarted_future.value
@@ -191,7 +191,7 @@ module Ione
           future = reactor.stop
           barrier.push(nil)
           reactor.should be_running
-          barrier.push(nil) until future.fulfilled?
+          barrier.push(nil) until future.resolved?
           reactor.should_not be_running
         end
 
@@ -204,7 +204,7 @@ module Ione
           reactor.start.value
           running_barrier.pop
           stopped_future = reactor.stop
-          await { stopped_future.fulfilled? }
+          await { stopped_future.resolved? }
           stopped_future.should be_fulfilled
           stopped_future.value
         end
