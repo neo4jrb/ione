@@ -3,7 +3,6 @@ source 'https://rubygems.org/'
 gemspec
 
 gem 'rake'
-gem 'concurrent-ruby'
 
 group :development do
   platforms :mri do

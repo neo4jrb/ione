@@ -12,7 +12,7 @@ module Ione
 
     def start
       f = @reactor.start
-      f = f.flat do
+      f = f.then_flat do
         @reactor.bind('0.0.0.0', @port, 5) do |acceptor|
           acceptor.on_accept do |connection|
             accept_connection(connection)

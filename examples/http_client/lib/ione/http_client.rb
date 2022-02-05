@@ -34,7 +34,7 @@ module Ione
         options[:ssl] = ctx
       end
       f = @reactor.connect(uri.host, uri.port, options) { |connection| HttpProtocolHandler.new(connection) }
-      f.flat do |handler|
+      f.then_flat do |handler|
         handler.send_get(uri.path, uri.query, headers)
       end
     end

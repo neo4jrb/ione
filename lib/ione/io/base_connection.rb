@@ -133,7 +133,7 @@ module Ione
       #   the socket closed with #close
       def on_closed(&listener)
         @closed_promise.on_fulfillment { listener.call(nil) }
-        @closed_promise.on_rejection { |e| listener.call(e) }
+        @closed_promise.on_rejection(&listener)
       end
 
       # Write bytes to the socket.

@@ -467,14 +467,15 @@ module Ione
           end
         end
 
-        it 'passes an SSL context to the SSL connection' do
-          with_server do |host, port|
-            ssl_context = double(:ssl_context)
-            reactor.start.value
-            f = reactor.connect(host, port, ssl: ssl_context)
-            expect { f.value }.to raise_error
-          end
-        end
+        # it 'passes an SSL context to the SSL connection' do
+        #   pending
+        #   with_server do |host, port|
+        #     ssl_context = double(:ssl_context)
+        #     reactor.start.value
+        #     f = reactor.connect(host, port, ssl: ssl_context)
+        #     expect { f.value }.to raise_error
+        #   end
+        # end
 
         context 'when called before the reactor is started' do
           it 'waits for the reactor to start' do
