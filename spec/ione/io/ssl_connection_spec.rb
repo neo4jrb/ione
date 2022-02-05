@@ -91,10 +91,10 @@ module Ione
           handler.should be_connected
         end
 
-        # it 'fails when #connect_nonblock raises an error that does not include the words "would block"' do
-        #   ssl_socket.stub(:connect_nonblock).and_raise(OpenSSL::SSL::SSLError.new('general bork'))
-        #   expect { handler.connect.value }.to raise_error(Ione::Io::ConnectionError)
-        # end
+        it 'fails when #connect_nonblock raises an error that does not include the words "would block"' do
+          ssl_socket.stub(:connect_nonblock).and_raise(OpenSSL::SSL::SSLError.new('general bork'))
+          expect { handler.connect.value }.to raise_error(Ione::Io::ConnectionError)
+        end
 
         it 'is closed when #connect_nonblock raises something that is not a "would block" error' do
           ssl_socket.stub(:connect_nonblock).and_raise(OpenSSL::SSL::SSLError.new('general bork'))
