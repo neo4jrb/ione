@@ -61,8 +61,8 @@ module Ione
       end
       message << "\r\n"
       @connection.write(message)
-      @promises << Promise.new
-      @promises.last.future
+      @promises << Concurrent::Promises.resolvable_future
+      @promises.last
     end
 
     def process_data(new_data)

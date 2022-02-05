@@ -97,7 +97,7 @@ module Ione
             end
           end
 
-          it 'restarts the reactor even when restarted before a failed stop', unresolved: RUBY_PLATFORM == 'java' do
+          it 'restarts the reactor even when restarted before a failed stop' do
             barrier = Queue.new
             selector.handler do
               if barrier.pop == :fail
@@ -257,7 +257,7 @@ module Ione
               next_increment = 1
               stopped_future = reactor.stop
             end
-            expect { stopped_future.value }.to raise_error(ReactorError, /timeout/)
+            expect { stopped_future.value! }.to raise_error(ReactorError, /timeout/)
             (time).should eq(3)
           end
         end
@@ -284,7 +284,7 @@ module Ione
               next_increment = 1
               stopped_future = reactor.stop
             end
-            expect { stopped_future.value }.to raise_error(ReactorError, /timeout/)
+            expect { stopped_future.value! }.to raise_error(ReactorError, /timeout/)
             time.should eq(5)
           end
         end
@@ -311,7 +311,7 @@ module Ione
             connection.stub(:flush).and_raise(StandardError, 'Boork')
             writable = true
             f = reactor.stop
-            expect { f.value }.to raise_error(StandardError, 'Boork')
+            expect { f.value! }.to raise_error(StandardError, 'Boork')
             connection.should be_closed
           end
         end
@@ -467,12 +467,12 @@ module Ione
           end
         end
 
-        it 'passes an SSL context to the SSL connection', unresolved: true do
+        it 'passes an SSL context to the SSL connection' do
           with_server do |host, port|
             ssl_context = double(:ssl_context)
             reactor.start.value
             f = reactor.connect(host, port, ssl: ssl_context)
-            expect { f.value }.to raise_error
+            expect { f.value! }.to raise_error
           end
         end
 
@@ -648,7 +648,7 @@ module Ione
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
           await { f.rejected? }
-          expect { f.value }.to raise_error(CancelledError)
+          expect { f.value! }.to raise_error(CancelledError)
         end
 
         it 'does nothing when the timer has already expired' do
@@ -660,7 +660,7 @@ module Ione
         end
 
         it 'does nothing when given a future that is not a timer' do
-          reactor.cancel_timer(Ione::Promise.new.future)
+          reactor.cancel_timer(Concurrent::Promises.resolvable_future)
         end
 
         it 'does nothing when given something that is not a future' do
@@ -887,7 +887,7 @@ module Ione
           f1.should be_resolved
           f2.should be_rejected
           f3.should be_rejected
-          expect { f3.value }.to raise_error(CancelledError)
+          expect { f3.value! }.to raise_error(CancelledError)
         end
       end
     end

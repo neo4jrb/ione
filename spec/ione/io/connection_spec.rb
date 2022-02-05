@@ -148,7 +148,7 @@ module Ione
           it 'fails if there are no more addresses to try' do
             socket.stub(:connect_nonblock).and_raise(Errno::EINVAL)
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
         end
 
@@ -172,7 +172,7 @@ module Ione
           it 'fails if there are no more addresses to try' do
             socket.stub(:connect_nonblock).and_raise(Errno::ECONNREFUSED)
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
         end
 
@@ -184,7 +184,7 @@ module Ione
 
           it 'fails the future with a ConnectionError' do
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
 
           it 'closes the socket' do
@@ -219,7 +219,7 @@ module Ione
 
           it 'fails the returned future with a ConnectionError' do
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
 
           it 'calls the close listener' do
@@ -256,7 +256,7 @@ module Ione
             clock.stub(:now).and_return(7)
             handler.connect
             f.should be_rejected
-            expect { f.value }.to raise_error(ConnectionTimeoutError)
+            expect { f.value! }.to raise_error(ConnectionTimeoutError)
           end
 
           it 'closes the connection' do
