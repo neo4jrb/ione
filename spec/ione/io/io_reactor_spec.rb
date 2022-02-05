@@ -467,7 +467,7 @@ module Ione
           end
         end
 
-        it 'passes an SSL context to the SSL connection' do
+        it 'passes an SSL context to the SSL connection', unresolved: true do
           with_server do |host, port|
             ssl_context = double(:ssl_context)
             reactor.start.value

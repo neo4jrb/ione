@@ -91,7 +91,7 @@ module Ione
           handler.should be_connected
         end
 
-        it 'fails when #connect_nonblock raises an error that does not include the words "would block"' do
+        it 'fails when #connect_nonblock raises an error that does not include the words "would block"', unresolved: true do
           ssl_socket.stub(:connect_nonblock).and_raise(OpenSSL::SSL::SSLError.new('general bork'))
           expect { handler.connect.value }.to raise_error(Ione::Io::ConnectionError)
         end
