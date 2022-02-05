@@ -205,7 +205,7 @@ module Ione
           running_barrier.pop
           stopped_future = reactor.stop
           await { stopped_future.resolved? }
-          stopped_future.should be_fulfilled
+          stopped_future.should be_resolved
           stopped_future.value
         end
 
@@ -324,10 +324,10 @@ module Ione
           active_timer2 = reactor.schedule_timer(111)
           expired_timer.should_not_receive(:fail)
           clock.stub(:now).and_return(2)
-          await { expired_timer.completed? }
+          await { expired_timer.resolved? }
           reactor.stop.value
-          active_timer1.should be_failed
-          active_timer2.should be_failed
+          active_timer1.should be_rejected
+          active_timer2.should be_rejected
         end
 
         context 'when not started' do
@@ -584,7 +584,7 @@ module Ione
             clock.stub(:now).and_return(1)
             f = reactor.schedule_timer(0.1)
             clock.stub(:now).and_return(1.1)
-            await { f.resolved? }
+            await { f.fulfilled? }
           end
         end
 
@@ -632,7 +632,7 @@ module Ione
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
-          await { f.failed? }
+          await { f.rejected? }
         end
 
         it 'does not trigger the timer future when it expires' do
@@ -640,14 +640,14 @@ module Ione
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
           clock.stub(:now).and_return(1.1)
-          await { f.failed? }
+          await { f.rejected? }
         end
 
         it 'fails the future with a CancelledError' do
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
-          await { f.failed? }
+          await { f.rejected? }
           expect { f.value }.to raise_error(CancelledError)
         end
 
@@ -655,7 +655,7 @@ module Ione
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           clock.stub(:now).and_return(1.1)
-          await { f.resolved? }
+          await { f.fulfilled? }
           reactor.cancel_timer(f)
         end
 
@@ -677,7 +677,7 @@ module Ione
             f = reactor.schedule_timer(0.1)
             reactor.cancel_timer(f)
             clock.stub(:now).and_return(2)
-            f.should be_failed
+            f.should be_rejected
             reactor.start.value
           end
         end
@@ -689,7 +689,7 @@ module Ione
             clock.stub(:now).and_return(1)
             f = reactor.schedule_timer(0.1)
             reactor.cancel_timer(f)
-            f.should be_failed
+            f.should be_rejected
             reactor.start.value
           end
         end
@@ -859,10 +859,10 @@ module Ione
           clock.stub(:now).and_return(1)
           future = scheduler.schedule_timer(1)
           scheduler.tick
-          future.should_not be_completed
+          future.should_not be_resolved
           clock.stub(:now).and_return(2)
           scheduler.tick
-          future.should be_completed
+          future.should be_resolved
         end
 
         it 'clears out timers that have expired' do
@@ -870,7 +870,7 @@ module Ione
           future = scheduler.schedule_timer(1)
           clock.stub(:now).and_return(2)
           scheduler.tick
-          future.should be_completed
+          future.should be_resolved
           expect { scheduler.tick }.to_not raise_error
         end
       end
@@ -884,9 +884,9 @@ module Ione
           clock.stub(:now).and_return(2)
           scheduler.tick
           scheduler.cancel_timers
-          f1.should be_completed
-          f2.should be_failed
-          f3.should be_failed
+          f1.should be_resolved
+          f2.should be_rejected
+          f3.should be_rejected
           expect { f3.value }.to raise_error(CancelledError)
         end
       end

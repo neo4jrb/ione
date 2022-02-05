@@ -109,7 +109,7 @@ module Ione
 
         it 'returns a future that resolves to itself when the socket has been bound' do
           f = acceptor.bind
-          f.should be_resolved
+          f.should be_fulfilled
           f.value.should equal(acceptor)
         end
       end

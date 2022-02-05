@@ -2,7 +2,6 @@
 
 require 'ione/heap'
 
-
 module Ione
   module Io
     ReactorError = Class.new(IoError)
@@ -90,7 +89,7 @@ module Ione
       # Initializes a new IO reactor.
       #
       # @param options [Hash] only used to inject behaviour during tests
-      def initialize(options={})
+      def initialize(options = {})
         @options = options
         @clock = options[:clock] || Time
         @state = PENDING_STATE
@@ -228,7 +227,7 @@ module Ione
       # @return [Ione::Future] a future that will resolve when the connection is
       #   open. The value will be the connection, or when a block is given the
       #   value returned by the block.
-      def connect(host, port, options=nil, &block)
+      def connect(host, port, options = nil, &block)
         if options.is_a?(Numeric) || options.nil?
           timeout = options || 5
           ssl = false
@@ -309,7 +308,7 @@ module Ione
       #   bound. The value will be the acceptor, or when a block is given, the
       #   value returned by the block.
       # @since v1.1.0
-      def bind(host, port, options=nil, &block)
+      def bind(host, port, options = nil, &block)
         if options.is_a?(Integer) || options.nil?
           backlog = options || 5
           ssl_context = nil
@@ -435,13 +434,20 @@ module Ione
     end
 
     # @private
-    class Timer < Promise
+    class Timer
       include Comparable
+      attr_reader :time, :future
 
-      attr_reader :time
+      def fulfill(value=nil)
+        @future.fulfill(value)
+      end
+
+      def fail(error)
+        @future.reject(error)
+      end
 
       def initialize(time)
-        super()
+        @future = Concurrent::Promises.resolvable_future
         @time = time
       end
 
@@ -457,12 +463,13 @@ module Ione
       def to_s
         "#<#{self.class.name}:#{object_id} @time=#{@time.to_f}>"
       end
+
       alias_method :inspect, :to_s
     end
 
     # @private
     class IoLoopBody
-      def initialize(unblocker, options={})
+      def initialize(unblocker, options = {})
         @selector = options[:selector] || IO
         @clock = options[:clock] || Time
         @timeout = options[:tick_resolution] || 1
@@ -539,7 +546,7 @@ module Ione
 
     # @private
     class Scheduler
-      def initialize(options={})
+      def initialize(options = {})
         @clock = options[:clock] || Time
         @lock = Mutex.new
         @timer_queue = Heap.new

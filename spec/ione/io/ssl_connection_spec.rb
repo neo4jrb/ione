@@ -80,10 +80,10 @@ module Ione
           error.extend(IO::WaitReadable)
           ssl_socket.stub(:connect_nonblock).and_raise(error)
           f = handler.connect
-          f.should_not be_resolved
+          f.should_not be_fulfilled
           ssl_socket.stub(:connect_nonblock).and_return(nil)
           handler.connect
-          f.should be_resolved
+          f.should be_fulfilled
         end
 
         it 'is connected when #connect_nonblock does not raise' do

@@ -99,9 +99,9 @@ shared_examples_for 'a connection' do |options|
     it 'returns a future that completes when the socket has closed' do
       handler.write('hello world')
       f = handler.drain
-      f.should_not be_completed
+      f.should_not be_resolved
       handler.flush
-      f.should be_completed
+      f.should be_resolved
     end
 
     it 'does not attempt to acquire the lock multiple times from the same thread' do
