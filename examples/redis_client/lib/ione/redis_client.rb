@@ -80,7 +80,7 @@ module Ione
     def handle_response(result, error = false)
       promise = @responses.shift
       if error
-        promise.fail(StandardError.new(result))
+        promise.reject(StandardError.new(result))
       else
         promise.fulfill(result)
       end

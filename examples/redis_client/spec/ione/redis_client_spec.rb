@@ -43,7 +43,7 @@ module Ione
       f.value.should be_nil
     end
 
-    it 'handles errors', unresolved: true do
+    it 'handles errors' do
       pending('Redis not running') unless client
       f = client.set('foo')
       expect { f.value! }.to raise_error("ERR wrong number of arguments for 'set' command")
