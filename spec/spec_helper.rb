@@ -22,6 +22,8 @@ unless ENV['COVERAGE'] == 'no' || RUBY_ENGINE == 'rbx'
     add_group 'Unit tests', 'spec/cql'
     add_group 'Integration tests', 'spec/integration'
   end
+
+  Integer = Fixnum if RUBY_VERSION < '2.4'
 end
 
 RSpec.configure do |config|
