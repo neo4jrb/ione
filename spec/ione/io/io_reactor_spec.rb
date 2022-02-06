@@ -82,9 +82,9 @@ module Ione
             reactor.start.value
             stopped_future = reactor.stop
             sequence = []
-            stopped_future.on_fulfillment { sequence << :stopped }
+            stopped_future.on_fulfillment! { sequence << :stopped }
             restarted_future = reactor.start
-            restarted_future.on_fulfillment { sequence << :restarted }
+            restarted_future.on_fulfillment! { sequence << :restarted }
             barrier.push(nil)
             stopped_future.value
             restarted_future.value
@@ -111,8 +111,8 @@ module Ione
             restarted_future = reactor.start
             crashed = false
             restarted = false
-            stopped_future.on_rejection { crashed = true }
-            restarted_future.on_resolution { restarted = true }
+            stopped_future.on_rejection! { crashed = true }
+            restarted_future.on_resolution! { restarted = true }
             barrier.push(:fail)
             stopped_future.value rescue nil
             restarted_future.value

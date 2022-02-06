@@ -242,12 +242,12 @@ shared_examples_for 'a connection' do |options|
   if options.nil? || options.fetch(:skip_read, false) == false
     describe '#read/#on_data' do
       it 'reads a chunk from the socket' do
-        socket.should_receive(:read_nonblock).with(instance_of(Fixnum)).and_return('foo bar')
+        socket.should_receive(:read_nonblock).with(instance_of(Integer)).and_return('foo bar')
         handler.read
       end
 
       it 'calls the data listener with the new data' do
-        socket.should_receive(:read_nonblock).with(instance_of(Fixnum)).and_return('foo bar')
+        socket.should_receive(:read_nonblock).with(instance_of(Integer)).and_return('foo bar')
         data = nil
         handler.on_data { |d| data = d }
         handler.read

@@ -116,7 +116,7 @@ module Ione
           @lock.unlock
         end
         if @state == RUNNING_STATE || @state == CRASHED_STATE
-          @stopped_promise.on_rejection(&listener)
+          @stopped_promise.on_rejection!(&listener)
         end
       end
 
@@ -147,7 +147,7 @@ module Ione
         @started_promise = Concurrent::Promises.resolvable_future
         @stopped_promise = Concurrent::Promises.resolvable_future
         @error_listeners.each do |listener|
-          @stopped_promise.on_rejection(&listener)
+          @stopped_promise.on_rejection!(&listener)
         end
         Thread.start do
           @started_promise.fulfill(self)

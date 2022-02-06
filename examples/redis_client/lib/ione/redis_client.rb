@@ -18,7 +18,7 @@ module Ione
       f = @reactor.start
       f = f.then_flat { @reactor.connect(@host, @port) }
       f = f.then { |connection| RedisProtocolHandler.new(connection) }
-      f.on_fulfillment { |protocol_handler| @protocol_handler = protocol_handler }
+      f.on_fulfillment! { |protocol_handler| @protocol_handler = protocol_handler }
       f.then { self }
     end
 

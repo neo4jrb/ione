@@ -132,8 +132,8 @@ module Ione
       # @yield [error, nil] the error that caused the socket to close, or nil if
       #   the socket closed with #close
       def on_closed(&listener)
-        @closed_promise.on_fulfillment { listener.call(nil) }
-        @closed_promise.on_rejection(&listener)
+        @closed_promise.on_fulfillment! { listener.call(nil) }
+        @closed_promise.on_rejection!(&listener)
       end
 
       # Write bytes to the socket.
