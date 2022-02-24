@@ -101,8 +101,10 @@ module Ione
             barrier = Queue.new
             selector.handler do
               if barrier.pop == :fail
+                puts 'popped fail from Queue'
                 raise 'Blurgh'
               else
+                puts 'popped from Queue'
                 [[], [], []]
               end
             end
@@ -113,6 +115,7 @@ module Ione
             restarted = false
             stopped_future.on_rejection! { crashed = true }
             restarted_future.on_resolution! { restarted = true }
+            puts 'pushing fail to Queue'
             barrier.push(:fail)
             stopped_future.value rescue nil
             res_val = restarted_future.value
