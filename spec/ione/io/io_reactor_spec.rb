@@ -386,16 +386,16 @@ module Ione
           await { !reactor.running? }
           await { calls.size >= 2 }
           reactor.on_error { calls << :pre_restarted }
-          calls.should eq([
+          calls.should contain_exactly(
             :pre_started,
             :post_started,
             :pre_restarted,
-          ])
+          )
           reactor.start
           reactor.on_error { calls << :post_restarted }
           barrier.push(nil)
           await { !reactor.running? }
-          calls.should eq([
+          calls.should contain_exactly(
             :pre_started,
             :post_started,
             :pre_restarted,
@@ -403,7 +403,7 @@ module Ione
             :post_started,
             :pre_restarted,
             :post_restarted,
-          ])
+          )
         end
       end
 
