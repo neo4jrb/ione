@@ -115,7 +115,8 @@ module Ione
             restarted_future.on_resolution! { restarted = true }
             barrier.push(:fail)
             stopped_future.value rescue nil
-            restarted_future.value
+            res_val = restarted_future.value
+            puts res_val.inspect
             await { crashed && restarted }
             begin
               crashed.should eq true

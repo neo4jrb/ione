@@ -143,9 +143,9 @@ module Ione
             # return @stopped_promise.then_flat { start }.then(&Concurrent::Promises.method(:fullfilled_future))
             #                        .rescue { start }.flat
             # Passes
-            return @stopped_promise.then { start }.rescue { start }.flat
+            # return @stopped_promise.then { start }.rescue { start }.flat
             # Passes
-            # return @stopped_promise.then_flat { start }.rescue { start }
+            return @stopped_promise.then_flat { start }.rescue { start }
             # Should pass but it does not. Equivalent of the original code
             # return fallback(@stopped_promise.then_flat { start }) { start }
           else
