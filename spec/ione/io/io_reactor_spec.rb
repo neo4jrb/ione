@@ -113,7 +113,8 @@ module Ione
             restarted_future = reactor.start
             crashed = false
             restarted = false
-            stopped_future.on_rejection! { crashed = true }
+            stopped_future.on_rejection! { puts "stopped future rejected"; crashed = true }
+            stopped_future.on_fulfillment! { puts "stopped future fulfilled" }
             restarted_future.on_resolution! { restarted = true }
             puts 'pushing fail to Queue'
             barrier.push(:fail)
