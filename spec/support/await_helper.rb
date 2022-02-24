@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module AwaitHelper
-  def await(timeout=15, &test)
+  def await(timeout=5, &test)
     started_at = Time.now
     until test.call
       yield
