@@ -378,7 +378,7 @@ module Ione
             ff = yield(reason)
             ff.on_fulfilment!(&f.method(:fulfill))
             ff.on_rejection!(&f.method(:reject))
-          rescue => e
+          rescue StandardError => e
             f.reject(e)
           end
         end
