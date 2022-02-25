@@ -145,9 +145,9 @@ module Ione
             # Passes
             # return @stopped_promise.then { start }.rescue { start }.flat
             # Passes
-            return @stopped_promise.then_flat { start }.rescue { start }
+            # return @stopped_promise.then_flat { start }.rescue { start }
             # Should pass but it does not. Equivalent of the original code
-            # return fallback(@stopped_promise.then_flat { start }) { start }
+            return fallback(@stopped_promise.then_flat { start }) { start }
           else
             @state = RUNNING_STATE
           end
@@ -367,6 +367,21 @@ module Ione
         end
         state = state_constant_name.to_s.rpartition('_').first
         %(#<#{self.class.name} #{state}>)
+      end
+
+      private
+
+      def fallback(future)
+        Concurrent::Promises.resolvable_future.tap do |f|
+          future.on_fulfillment!(&f.method(:fulfill))
+          future.on_rejection! do |reason|
+            ff = yield(reason)
+            ff.on_fulfilment!(&f.method(:fulfill))
+            ff.on_rejection!(&f.method(:reject))
+          rescue => e
+            f.reject(e)
+          end
+        end
       end
     end
 
@@ -629,21 +644,6 @@ module Ione
       def to_s
         %(#<#{self.class.name} @timers=[#{@pending_timers.values.map(&:to_s).join(', ')}]>)
       end
-      #
-      # private
-      #
-      # def fallback(future, &block)
-      #   Concurrent::Promises.resolvable_future.tap do |f|
-      #     future.on_fulfillment(&f.method(:fulfill))
-      #     future.on_rejection do |reason|
-      #       ff = block.call(reason)
-      #       ff.on_fulfilment(&f.method(:fulfill))
-      #       ff.on_rejection(&f.method(:reject))
-      #     rescue => e
-      #       f.reject(e)
-      #     end
-      #   end
-      # end
     end
   end
 end
