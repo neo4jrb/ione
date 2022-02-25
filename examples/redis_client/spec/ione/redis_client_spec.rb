@@ -6,11 +6,11 @@ require 'ione/redis_client'
 module Ione
   describe RedisClient do
     let :client do
-      # begin
+      begin
         described_class.connect(ENV['SERVER_HOST'], 6379).value
-      # rescue
-      #   nil
-      # end
+      rescue
+        nil
+      end
     end
 
     it 'can set a value' do
