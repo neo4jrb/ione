@@ -139,14 +139,6 @@ module Ione
           if @state == RUNNING_STATE
             return @started_promise
           elsif @state == STOPPING_STATE
-            # Does not pass
-            # return @stopped_promise.then_flat { start }.then(&Concurrent::Promises.method(:fullfilled_future))
-            #                        .rescue { start }.flat
-            # Passes
-            # return @stopped_promise.then { start }.rescue { start }.flat
-            # Passes
-            # return @stopped_promise.then_flat { start }.rescue { start }
-            # Should pass but it does not. Equivalent of the original code
             return fallback(@stopped_promise.then_flat { start }) { start }
           else
             @state = RUNNING_STATE

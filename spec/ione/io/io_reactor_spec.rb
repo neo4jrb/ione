@@ -99,7 +99,6 @@ module Ione
 
           # sometimes selector is not called on reactor.stop
           it 'restarts the reactor even when restarted before a failed stop', unresolved: RUBY_PLATFORM == 'java' do
-            puts "RUBY_PLATFORM=#{RUBY_PLATFORM}"
             barrier = Queue.new
             selector.handler do
               if barrier.pop == :fail
