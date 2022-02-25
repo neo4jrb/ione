@@ -375,11 +375,13 @@ module Ione
         Concurrent::Promises.resolvable_future.tap do |f|
           future.on_fulfillment!(&f.method(:fulfill))
           future.on_rejection! do |reason|
-            ff = yield(reason)
-            ff.on_fulfilment!(&f.method(:fulfill))
-            ff.on_rejection!(&f.method(:reject))
-          rescue StandardError => e
-            f.reject(e)
+            begin
+              ff = yield(reason)
+              ff.on_fulfilment!(&f.method(:fulfill))
+              ff.on_rejection!(&f.method(:reject))
+            rescue => e
+              f.reject(e)
+            end
           end
         end
       end
