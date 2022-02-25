@@ -76,7 +76,7 @@ module Ione
 
       it 'sends a GET request with headers' do
         response = client.get("#{base_uri}/helloworld", 'Accept' => 'text/html').value
-        response.headers.should include('Content-Type' => 'text/html')
+        expect(response.headers['Content-Type']).to start_with 'text/html'
         response.body.should eq('<h1>Hello, World!</h1>')
       end
     end
