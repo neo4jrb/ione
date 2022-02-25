@@ -80,10 +80,10 @@ module Ione
           error.extend(IO::WaitReadable)
           ssl_socket.stub(:connect_nonblock).and_raise(error)
           f = handler.connect
-          f.should_not be_resolved
+          f.should_not be_fulfilled
           ssl_socket.stub(:connect_nonblock).and_return(nil)
           handler.connect
-          f.should be_resolved
+          f.should be_fulfilled
         end
 
         it 'is connected when #connect_nonblock does not raise' do
@@ -93,7 +93,7 @@ module Ione
 
         it 'fails when #connect_nonblock raises an error that does not include the words "would block"' do
           ssl_socket.stub(:connect_nonblock).and_raise(OpenSSL::SSL::SSLError.new('general bork'))
-          expect { handler.connect.value }.to raise_error(Ione::Io::ConnectionError)
+          expect { handler.connect.value! }.to raise_error(Ione::Io::ConnectionError)
         end
 
         it 'is closed when #connect_nonblock raises something that is not a "would block" error' do

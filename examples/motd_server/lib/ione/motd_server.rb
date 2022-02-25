@@ -2,10 +2,9 @@
 
 require 'ione'
 
-
 module Ione
   class MotdServer
-    def initialize(port, path='/etc/motd')
+    def initialize(port, path = '/etc/motd')
       @port = port
       @path = path
       @reactor = Io::IoReactor.new
@@ -13,18 +12,18 @@ module Ione
 
     def start
       f = @reactor.start
-      f = f.flat_map do
+      f = f.then_flat do
         @reactor.bind('0.0.0.0', @port, 5) do |acceptor|
           acceptor.on_accept do |connection|
             accept_connection(connection)
           end
         end
       end
-      f.map(self)
+      f.then { self }
     end
 
     def stop
-      @reactor.stop.map(self)
+      @reactor.stop.then { self }
     end
 
     private

@@ -52,7 +52,7 @@ describe 'SSL' do
     ssl_context.tmp_dh_callback = proc { SslSpec::DH_PARAMS }
 
     f = io_reactor.start
-    f = f.flat_map do
+    f = f.then_flat do
       io_reactor.bind(ENV['SERVER_HOST'], port, ssl: ssl_context) do |acceptor|
         acceptor.on_accept do |connection|
           connection.on_data do |data|
@@ -69,9 +69,9 @@ describe 'SSL' do
     ssl_context = OpenSSL::SSL::SSLContext.new
     ssl_context.cert = OpenSSL::X509::Certificate.new(ssl_cert)
 
-    response_received = Ione::Promise.new
+    response_received = Concurrent::Promises.resolvable_future
     f = start_server
-    f = f.flat_map do
+    f = f.then_flat do
       io_reactor.connect(ENV['SERVER_HOST'], port, ssl: ssl_context)
     end
     client = f.value
@@ -80,14 +80,14 @@ describe 'SSL' do
       response_received.fulfill(data)
     end
     client.write('hello world')
-    response_received.future.value
+    response_received.value
     server_received_data.to_s.should eq('hello world')
     client_received_data.to_s.should eq('dlrow olleh')
   end
 
   it 'fails to send a message when not using encryption' do
     f = start_server
-    f = f.flat_map do
+    f = f.then_flat do
       io_reactor.connect(ENV['SERVER_HOST'], port)
     end
     client = f.value

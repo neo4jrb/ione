@@ -98,7 +98,7 @@ module Ione
         it 'returns a failed future when none of the addresses worked' do
           socket.stub(:bind).and_raise(Errno::EADDRNOTAVAIL)
           f = acceptor.bind
-          expect { f.value }.to raise_error(Errno::EADDRNOTAVAIL)
+          expect { f.value! }.to raise_error(Errno::EADDRNOTAVAIL)
         end
 
         it 'closes the socket when none of the addresses worked' do
@@ -109,7 +109,7 @@ module Ione
 
         it 'returns a future that resolves to itself when the socket has been bound' do
           f = acceptor.bind
-          f.should be_resolved
+          f.should be_fulfilled
           f.value.should equal(acceptor)
         end
       end

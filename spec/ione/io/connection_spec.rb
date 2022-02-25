@@ -93,7 +93,7 @@ module Ione
         shared_examples 'on successfull connection' do
           it 'fulfilles the returned future and returns itself' do
             f = handler.connect
-            f.should be_resolved
+            f.should be_fulfilled
             f.value.should equal(handler)
           end
 
@@ -123,8 +123,8 @@ module Ione
           it 'it does nothing' do
             socket.stub(:connect_nonblock).and_raise(Errno::EALREADY)
             f = handler.connect
-            f.should_not be_resolved
-            f.should_not be_failed
+            f.should_not be_fulfilled
+            f.should_not be_rejected
           end
         end
 
@@ -148,7 +148,7 @@ module Ione
           it 'fails if there are no more addresses to try' do
             socket.stub(:connect_nonblock).and_raise(Errno::EINVAL)
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
         end
 
@@ -172,7 +172,7 @@ module Ione
           it 'fails if there are no more addresses to try' do
             socket.stub(:connect_nonblock).and_raise(Errno::ECONNREFUSED)
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
         end
 
@@ -184,7 +184,7 @@ module Ione
 
           it 'fails the future with a ConnectionError' do
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
 
           it 'closes the socket' do
@@ -219,7 +219,7 @@ module Ione
 
           it 'fails the returned future with a ConnectionError' do
             f = handler.connect
-            expect { f.value }.to raise_error(ConnectionError)
+            expect { f.value! }.to raise_error(ConnectionError)
           end
 
           it 'calls the close listener' do
@@ -255,8 +255,8 @@ module Ione
             socket.should_receive(:close)
             clock.stub(:now).and_return(7)
             handler.connect
-            f.should be_failed
-            expect { f.value }.to raise_error(ConnectionTimeoutError)
+            f.should be_rejected
+            expect { f.value! }.to raise_error(ConnectionTimeoutError)
           end
 
           it 'closes the connection' do

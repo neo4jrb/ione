@@ -2,7 +2,6 @@
 
 require 'ione'
 
-
 module Ione
   class RedisClient
     def self.connect(host, port)
@@ -17,10 +16,10 @@ module Ione
 
     def connect
       f = @reactor.start
-      f = f.flat_map { @reactor.connect(@host, @port) }
-      f = f.map { |connection| RedisProtocolHandler.new(connection) }
-      f.on_value { |protocol_handler| @protocol_handler = protocol_handler }
-      f.map(self)
+      f = f.then_flat { @reactor.connect(@host, @port) }
+      f = f.then { |connection| RedisProtocolHandler.new(connection) }
+      f.on_fulfillment! { |protocol_handler| @protocol_handler = protocol_handler }
+      f.then { self }
     end
 
     def method_missing(name, *args)
@@ -67,7 +66,7 @@ module Ione
     end
 
     def send_request(*args)
-      promise = Ione::Promise.new
+      promise = Concurrent::Promises.resolvable_future
       @responses << promise
       request = "*#{args.size}\r\n"
       args.each do |arg|
@@ -75,13 +74,13 @@ module Ione
         request << "$#{arg_str.bytesize}\r\n#{arg_str}\r\n"
       end
       @line_protocol.write(request)
-      promise.future
+      promise
     end
 
-    def handle_response(result, error=false)
+    def handle_response(result, error = false)
       promise = @responses.shift
       if error
-        promise.fail(StandardError.new(result))
+        promise.reject(StandardError.new(result))
       else
         promise.fulfill(result)
       end

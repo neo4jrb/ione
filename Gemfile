@@ -16,8 +16,8 @@ group :http_client_example do
 end
 
 group :test do
+  gem 'coveralls'
   gem 'rspec'
   gem 'rspec-collection_matchers'
   gem 'simplecov'
-  gem 'coveralls'
 end

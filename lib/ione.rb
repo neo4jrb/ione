@@ -3,6 +3,7 @@
 module Ione
 end
 
-require 'ione/future'
 require 'ione/byte_buffer'
 require 'ione/io'
+require 'concurrent-ruby'
+require 'concurrent/edge/promises'

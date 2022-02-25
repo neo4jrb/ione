@@ -82,9 +82,9 @@ module Ione
             reactor.start.value
             stopped_future = reactor.stop
             sequence = []
-            stopped_future.on_complete { sequence << :stopped }
+            stopped_future.on_fulfillment! { sequence << :stopped }
             restarted_future = reactor.start
-            restarted_future.on_complete { sequence << :restarted }
+            restarted_future.on_fulfillment! { sequence << :restarted }
             barrier.push(nil)
             stopped_future.value
             restarted_future.value
@@ -97,6 +97,7 @@ module Ione
             end
           end
 
+          # sometimes selector is not called on reactor.stop
           it 'restarts the reactor even when restarted before a failed stop', unresolved: RUBY_PLATFORM == 'java' do
             barrier = Queue.new
             selector.handler do
@@ -111,8 +112,8 @@ module Ione
             restarted_future = reactor.start
             crashed = false
             restarted = false
-            stopped_future.on_failure { crashed = true }
-            restarted_future.on_complete { restarted = true }
+            stopped_future.on_rejection! { crashed = true }
+            restarted_future.on_resolution! { restarted = true }
             barrier.push(:fail)
             stopped_future.value rescue nil
             restarted_future.value
@@ -191,7 +192,7 @@ module Ione
           future = reactor.stop
           barrier.push(nil)
           reactor.should be_running
-          barrier.push(nil) until future.completed?
+          barrier.push(nil) until future.resolved?
           reactor.should_not be_running
         end
 
@@ -204,8 +205,8 @@ module Ione
           reactor.start.value
           running_barrier.pop
           stopped_future = reactor.stop
-          await { stopped_future.completed? }
-          stopped_future.should be_completed
+          await { stopped_future.resolved? }
+          stopped_future.should be_resolved
           stopped_future.value
         end
 
@@ -257,7 +258,7 @@ module Ione
               next_increment = 1
               stopped_future = reactor.stop
             end
-            expect { stopped_future.value }.to raise_error(ReactorError, /timeout/)
+            expect { stopped_future.value! }.to raise_error(ReactorError, /timeout/)
             (time).should eq(3)
           end
         end
@@ -284,7 +285,7 @@ module Ione
               next_increment = 1
               stopped_future = reactor.stop
             end
-            expect { stopped_future.value }.to raise_error(ReactorError, /timeout/)
+            expect { stopped_future.value! }.to raise_error(ReactorError, /timeout/)
             time.should eq(5)
           end
         end
@@ -311,7 +312,7 @@ module Ione
             connection.stub(:flush).and_raise(StandardError, 'Boork')
             writable = true
             f = reactor.stop
-            expect { f.value }.to raise_error(StandardError, 'Boork')
+            expect { f.value! }.to raise_error(StandardError, 'Boork')
             connection.should be_closed
           end
         end
@@ -324,10 +325,10 @@ module Ione
           active_timer2 = reactor.schedule_timer(111)
           expired_timer.should_not_receive(:fail)
           clock.stub(:now).and_return(2)
-          await { expired_timer.completed? }
+          await { expired_timer.resolved? }
           reactor.stop.value
-          active_timer1.should be_failed
-          active_timer2.should be_failed
+          active_timer1.should be_rejected
+          active_timer2.should be_rejected
         end
 
         context 'when not started' do
@@ -386,16 +387,16 @@ module Ione
           await { !reactor.running? }
           await { calls.size >= 2 }
           reactor.on_error { calls << :pre_restarted }
-          calls.should eq([
+          calls.should contain_exactly(
             :pre_started,
             :post_started,
             :pre_restarted,
-          ])
+          )
           reactor.start
           reactor.on_error { calls << :post_restarted }
           barrier.push(nil)
           await { !reactor.running? }
-          calls.should eq([
+          calls.should contain_exactly(
             :pre_started,
             :post_started,
             :pre_restarted,
@@ -403,7 +404,7 @@ module Ione
             :post_started,
             :pre_restarted,
             :post_restarted,
-          ])
+          )
         end
       end
 
@@ -472,7 +473,7 @@ module Ione
             ssl_context = double(:ssl_context)
             reactor.start.value
             f = reactor.connect(host, port, ssl: ssl_context)
-            expect { f.value }.to raise_error
+            expect { f.value! }.to raise_error
           end
         end
 
@@ -584,7 +585,7 @@ module Ione
             clock.stub(:now).and_return(1)
             f = reactor.schedule_timer(0.1)
             clock.stub(:now).and_return(1.1)
-            await { f.resolved? }
+            await { f.fulfilled? }
           end
         end
 
@@ -632,7 +633,7 @@ module Ione
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
-          await { f.failed? }
+          await { f.rejected? }
         end
 
         it 'does not trigger the timer future when it expires' do
@@ -640,27 +641,27 @@ module Ione
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
           clock.stub(:now).and_return(1.1)
-          await { f.failed? }
+          await { f.rejected? }
         end
 
         it 'fails the future with a CancelledError' do
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           reactor.cancel_timer(f)
-          await { f.failed? }
-          expect { f.value }.to raise_error(CancelledError)
+          await { f.rejected? }
+          expect { f.value! }.to raise_error(CancelledError)
         end
 
         it 'does nothing when the timer has already expired' do
           clock.stub(:now).and_return(1)
           f = reactor.schedule_timer(0.1)
           clock.stub(:now).and_return(1.1)
-          await { f.resolved? }
+          await { f.fulfilled? }
           reactor.cancel_timer(f)
         end
 
         it 'does nothing when given a future that is not a timer' do
-          reactor.cancel_timer(Ione::Promise.new.future)
+          reactor.cancel_timer(Concurrent::Promises.resolvable_future)
         end
 
         it 'does nothing when given something that is not a future' do
@@ -677,7 +678,7 @@ module Ione
             f = reactor.schedule_timer(0.1)
             reactor.cancel_timer(f)
             clock.stub(:now).and_return(2)
-            f.should be_failed
+            f.should be_rejected
             reactor.start.value
           end
         end
@@ -689,7 +690,7 @@ module Ione
             clock.stub(:now).and_return(1)
             f = reactor.schedule_timer(0.1)
             reactor.cancel_timer(f)
-            f.should be_failed
+            f.should be_rejected
             reactor.start.value
           end
         end
@@ -859,10 +860,10 @@ module Ione
           clock.stub(:now).and_return(1)
           future = scheduler.schedule_timer(1)
           scheduler.tick
-          future.should_not be_completed
+          future.should_not be_resolved
           clock.stub(:now).and_return(2)
           scheduler.tick
-          future.should be_completed
+          future.should be_resolved
         end
 
         it 'clears out timers that have expired' do
@@ -870,7 +871,7 @@ module Ione
           future = scheduler.schedule_timer(1)
           clock.stub(:now).and_return(2)
           scheduler.tick
-          future.should be_completed
+          future.should be_resolved
           expect { scheduler.tick }.to_not raise_error
         end
       end
@@ -884,10 +885,10 @@ module Ione
           clock.stub(:now).and_return(2)
           scheduler.tick
           scheduler.cancel_timers
-          f1.should be_completed
-          f2.should be_failed
-          f3.should be_failed
-          expect { f3.value }.to raise_error(CancelledError)
+          f1.should be_resolved
+          f2.should be_rejected
+          f3.should be_rejected
+          expect { f3.value! }.to raise_error(CancelledError)
         end
       end
     end

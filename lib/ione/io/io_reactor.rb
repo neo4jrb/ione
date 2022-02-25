@@ -2,7 +2,6 @@
 
 require 'ione/heap'
 
-
 module Ione
   module Io
     ReactorError = Class.new(IoError)
@@ -90,7 +89,7 @@ module Ione
       # Initializes a new IO reactor.
       #
       # @param options [Hash] only used to inject behaviour during tests
-      def initialize(options={})
+      def initialize(options = {})
         @options = options
         @clock = options[:clock] || Time
         @state = PENDING_STATE
@@ -117,7 +116,7 @@ module Ione
           @lock.unlock
         end
         if @state == RUNNING_STATE || @state == CRASHED_STATE
-          @stopped_promise.future.on_failure(&listener)
+          @stopped_promise.on_rejection!(&listener)
         end
       end
 
@@ -138,17 +137,25 @@ module Ione
       def start
         @lock.synchronize do
           if @state == RUNNING_STATE
-            return @started_promise.future
+            return @started_promise
           elsif @state == STOPPING_STATE
-            return @stopped_promise.future.flat_map { start }.fallback { start }
+            # Does not pass
+            # return @stopped_promise.then_flat { start }.then(&Concurrent::Promises.method(:fullfilled_future))
+            #                        .rescue { start }.flat
+            # Passes
+            # return @stopped_promise.then { start }.rescue { start }.flat
+            # Passes
+            return @stopped_promise.then_flat { start }.rescue { start }
+            # Should pass but it does not. Equivalent of the original code
+            # return fallback(@stopped_promise.then_flat { start }) { start }
           else
             @state = RUNNING_STATE
           end
         end
-        @started_promise = Promise.new
-        @stopped_promise = Promise.new
+        @started_promise = Concurrent::Promises.resolvable_future
+        @stopped_promise = Concurrent::Promises.resolvable_future
         @error_listeners.each do |listener|
-          @stopped_promise.future.on_failure(&listener)
+          @stopped_promise.on_rejection!(&listener)
         end
         Thread.start do
           @started_promise.fulfill(self)
@@ -172,7 +179,7 @@ module Ione
             ensure
               if error
                 @state = CRASHED_STATE
-                @stopped_promise.fail(error)
+                @stopped_promise.reject(error)
               else
                 @state = STOPPED_STATE
                 @stopped_promise.fulfill(self)
@@ -180,7 +187,7 @@ module Ione
             end
           end
         end
-        @started_promise.future
+        @started_promise
       end
 
       # Stops the reactor.
@@ -193,13 +200,13 @@ module Ione
       def stop
         @lock.synchronize do
           if @state == PENDING_STATE
-            Future.resolved(self)
+            Concurrent::Promises.fulfilled_future(self)
           elsif @state != STOPPED_STATE && @state != CRASHED_STATE
             @state = STOPPING_STATE
             @unblocker.unblock
-            @stopped_promise.future
+            @stopped_promise
           else
-            @stopped_promise.future
+            @stopped_promise
           end
         end
       end
@@ -228,7 +235,7 @@ module Ione
       # @return [Ione::Future] a future that will resolve when the connection is
       #   open. The value will be the connection, or when a block is given the
       #   value returned by the block.
-      def connect(host, port, options=nil, &block)
+      def connect(host, port, options = nil, &block)
         if options.is_a?(Numeric) || options.nil?
           timeout = options || 5
           ssl = false
@@ -241,7 +248,7 @@ module Ione
         @io_loop.add_socket(connection)
         @unblocker.unblock if running?
         if ssl
-          f = f.flat_map do
+          f = f.then_flat do
             ssl_context = ssl == true ? nil : ssl
             upgraded_connection = SslConnection.new(host, port, connection.to_io, @unblocker, ssl_context)
             ff = upgraded_connection.connect
@@ -251,7 +258,7 @@ module Ione
             ff
           end
         end
-        f = f.map(&block) if block_given?
+        f = f.then(&block) if block_given?
         f
       end
 
@@ -309,7 +316,7 @@ module Ione
       #   bound. The value will be the acceptor, or when a block is given, the
       #   value returned by the block.
       # @since v1.1.0
-      def bind(host, port, options=nil, &block)
+      def bind(host, port, options = nil, &block)
         if options.is_a?(Integer) || options.nil?
           backlog = options || 5
           ssl_context = nil
@@ -325,7 +332,7 @@ module Ione
         f = server.bind
         @io_loop.add_socket(server)
         @unblocker.unblock if running?
-        f = f.map(&block) if block_given?
+        f = f.then(&block) if block_given?
         f
       end
 
@@ -435,13 +442,20 @@ module Ione
     end
 
     # @private
-    class Timer < Promise
+    class Timer
       include Comparable
+      attr_reader :time, :future
 
-      attr_reader :time
+      def fulfill(value = nil)
+        @future.fulfill(value)
+      end
+
+      def fail(error)
+        @future.reject(error)
+      end
 
       def initialize(time)
-        super()
+        @future = Concurrent::Promises.resolvable_future
         @time = time
       end
 
@@ -457,12 +471,13 @@ module Ione
       def to_s
         "#<#{self.class.name}:#{object_id} @time=#{@time.to_f}>"
       end
+
       alias_method :inspect, :to_s
     end
 
     # @private
     class IoLoopBody
-      def initialize(unblocker, options={})
+      def initialize(unblocker, options = {})
         @selector = options[:selector] || IO
         @clock = options[:clock] || Time
         @timeout = options[:tick_resolution] || 1
@@ -539,7 +554,7 @@ module Ione
 
     # @private
     class Scheduler
-      def initialize(options={})
+      def initialize(options = {})
         @clock = options[:clock] || Time
         @lock = Mutex.new
         @timer_queue = Heap.new
@@ -614,6 +629,21 @@ module Ione
       def to_s
         %(#<#{self.class.name} @timers=[#{@pending_timers.values.map(&:to_s).join(', ')}]>)
       end
+      #
+      # private
+      #
+      # def fallback(future, &block)
+      #   Concurrent::Promises.resolvable_future.tap do |f|
+      #     future.on_fulfillment(&f.method(:fulfill))
+      #     future.on_rejection do |reason|
+      #       ff = block.call(reason)
+      #       ff.on_fulfilment(&f.method(:fulfill))
+      #       ff.on_rejection(&f.method(:reject))
+      #     rescue => e
+      #       f.reject(e)
+      #     end
+      #   end
+      # end
     end
   end
 end

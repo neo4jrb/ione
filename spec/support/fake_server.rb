@@ -20,14 +20,14 @@ class FakeServer
       @running = true
     end
     @sockets = [TCPServer.new(@port)]
-    @started = Ione::Promise.new
+    @started = Concurrent::Promises.resolvable_future
     @thread = Thread.start do
       Thread.current.abort_on_exception = true
       sleep(options[:accept_delay] || 0)
-      @started.fulfill
+      @started.fulfill(nil)
       io_loop
     end
-    @started.future.value
+    @started.value
     self
   end
 
